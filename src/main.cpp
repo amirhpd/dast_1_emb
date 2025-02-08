@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <Servo.h>
+#include <LiquidCrystal.h>
 #include <vector>
 
 #define JOINT_1_PIN 8
@@ -13,6 +14,9 @@
 #define JOINT_3_START 0
 #define JOINT_4_START 0
 #define JOINT_5_START 0
+
+const int rs = 0, en = 1, d4 = 4, d5 = 5, d6 = 6, d7 = 7;
+LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 
 // Register the servo motors of each joint
 Servo joint_1;
@@ -128,28 +132,37 @@ void setup() {
 
   Serial.begin(115200);
   Serial.setTimeout(1);
+  lcd.begin(16, 2);
 
   delay(2000);  
 }
 
 void loop() {
-  Servo motors[] = {joint_1, joint_2, joint_3, joint_4, joint_5};
+  if (Serial.available())
+  {
+    String data = Serial.readString();
+    std::vector<String> joint_commands = split_string(data, '-');
+    if(joint_commands.size() == 5){
+      int goals[5] = {
+        joint_commands[0].toInt(), 
+        joint_commands[1].toInt(), 
+        joint_commands[2].toInt(), 
+        joint_commands[3].toInt(), 
+        joint_commands[4].toInt()
+        };
+      Servo motors[] = {joint_1, joint_2, joint_3, joint_4, joint_5};
 
-  int goals_1[5] = {90, 90, 90, 90, 90};
-  digitalWrite(LED_BUILTIN, HIGH);
-  digitalWrite(2, HIGH);
-  reach_goal(motors, goals_1, 10);
-  digitalWrite(2, LOW);
-  digitalWrite(LED_BUILTIN, LOW);
-  delay(1000);  
+      digitalWrite(LED_BUILTIN, HIGH);
+      digitalWrite(2, HIGH);
+      reach_goal(motors, goals, 1);
+      digitalWrite(2, LOW);
+      digitalWrite(LED_BUILTIN, LOW);
 
-  int goals_2[5] = {45, 45, 45, 45, 45};
-  digitalWrite(LED_BUILTIN, HIGH);
-  digitalWrite(2, HIGH);
-  reach_goal(motors, goals_2, 10);
-  digitalWrite(2, LOW);
-  digitalWrite(LED_BUILTIN, LOW);
-  delay(1000);  
-
-
+      lcd.setCursor(0, 0);
+      for (int i = 0; i < 5; i++){
+        lcd.print(goals[i]);
+        lcd.print("-");
+      }
+    }
+  }
 }
