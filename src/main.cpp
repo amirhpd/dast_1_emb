@@ -18,30 +18,12 @@
 const int rs = 0, en = 1, d4 = 4, d5 = 5, d6 = 6, d7 = 7;
 LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 
-// Register the servo motors of each joint
 Servo joint_1;
 Servo joint_2; 
 Servo joint_3; 
 Servo joint_4; 
 Servo joint_5; 
 
-
-// Slow movement
-// void reach_goal(Servo& motor, int goal){
-//   if(goal>=motor.read()){
-//     // goes from the start point degrees to the end point degrees
-//     for (int pos = motor.read(); pos <= goal; pos += 1) { 
-//       motor.write(pos);     
-//       delay(10);                       
-//     }
-//   } else{
-//     // goes from the end point degrees to the start point degrees
-//     for (int pos = motor.read(); pos >= goal; pos -= 1) { 
-//       motor.write(pos);     
-//       delay(10);                       
-//     }
-//   }
-// }
 
 void reach_goal(Servo motors[], int goals[], int delay_){
   int read_1 = motors[0].read();
@@ -97,7 +79,6 @@ void reach_goal(Servo motors[], int goals[], int delay_){
   }
 }
 
-// Split String
 std::vector<String> split_string(String data, char separator){
   std::vector<String> output;
   int startIndex = 0;
@@ -108,7 +89,6 @@ std::vector<String> split_string(String data, char separator){
     startIndex = endIndex + 1;
   }
   output.push_back(data.substring(startIndex));
-  delay(1000);
   return output;
 }
 
@@ -134,7 +114,7 @@ void setup() {
   Serial.setTimeout(1);
   lcd.begin(16, 2);
 
-  delay(2000);  
+  delay(500); 
 }
 
 void loop() {
@@ -154,15 +134,23 @@ void loop() {
 
       digitalWrite(LED_BUILTIN, HIGH);
       digitalWrite(2, HIGH);
-      reach_goal(motors, goals, 1);
+      reach_goal(motors, goals, 0);
       digitalWrite(2, LOW);
       digitalWrite(LED_BUILTIN, LOW);
 
+      String response = 
+          "F" +
+          String(goals[0]) + "-" + 
+          String(goals[1]) + "-" + 
+          String(goals[2]) + "-" + 
+          String(goals[3]) + "-" + 
+          String(goals[4]) ;
+
+      Serial.println(response);
+
+      lcd.clear();
       lcd.setCursor(0, 0);
-      for (int i = 0; i < 5; i++){
-        lcd.print(goals[i]);
-        lcd.print("-");
-      }
+      lcd.print(response);
     }
   }
 }
