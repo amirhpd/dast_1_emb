@@ -9,11 +9,11 @@
 #define JOINT_4_PIN 11
 #define JOINT_5_PIN 12
 
-#define JOINT_1_START 0
-#define JOINT_2_START 0
-#define JOINT_3_START 0
-#define JOINT_4_START 0
-#define JOINT_5_START 0
+#define JOINT_1_START 90
+#define JOINT_2_START 90
+#define JOINT_3_START 90
+#define JOINT_4_START 90
+#define JOINT_5_START 90
 
 const int rs = 0, en = 1, d4 = 4, d5 = 5, d6 = 6, d7 = 7;
 LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
@@ -92,6 +92,10 @@ std::vector<String> split_string(String data, char separator){
   return output;
 }
 
+int corrector(int x, float a, float b){
+  return int((x * a) + b);
+}
+
 void setup() {
   digitalWrite(2, LOW); 
   joint_1.attach(JOINT_1_PIN);
@@ -121,14 +125,14 @@ void loop() {
   if (Serial.available())
   {
     String data = Serial.readString();
-    std::vector<String> joint_commands = split_string(data, '-');
+    std::vector<String> joint_commands = split_string(data, ',');
     if(joint_commands.size() == 5){
       int goals[5] = {
-        joint_commands[0].toInt(), 
-        joint_commands[1].toInt(), 
-        joint_commands[2].toInt(), 
-        joint_commands[3].toInt(), 
-        joint_commands[4].toInt()
+        joint_commands[0].toInt() + 90,  // mapping -90 - 90 to 0 - 180
+        corrector(joint_commands[1].toInt(), 0.7222, -5.0) + 90, 
+        joint_commands[2].toInt() + 90,
+        joint_commands[3].toInt() + 90,
+        joint_commands[4].toInt() + 90
         };
       Servo motors[] = {joint_1, joint_2, joint_3, joint_4, joint_5};
 
@@ -140,11 +144,11 @@ void loop() {
 
       String response = 
           "F" +
-          String(goals[0]) + "-" + 
-          String(goals[1]) + "-" + 
-          String(goals[2]) + "-" + 
-          String(goals[3]) + "-" + 
-          String(goals[4]) ;
+          joint_commands[0] + "," + 
+          joint_commands[1] + "," + 
+          joint_commands[2] + "," + 
+          joint_commands[3] + "," + 
+          joint_commands[4];
 
       Serial.println(response);
 
