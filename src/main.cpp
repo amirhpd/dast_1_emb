@@ -9,39 +9,21 @@
 #define JOINT_4_PIN 11
 #define JOINT_5_PIN 12
 
-#define JOINT_1_START 0
-#define JOINT_2_START 0
-#define JOINT_3_START 0
-#define JOINT_4_START 0
-#define JOINT_5_START 0
+#define JOINT_1_START 90
+#define JOINT_2_START 90
+#define JOINT_3_START 90
+#define JOINT_4_START 90
+#define JOINT_5_START 90
 
 const int rs = 0, en = 1, d4 = 4, d5 = 5, d6 = 6, d7 = 7;
 LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 
-// Register the servo motors of each joint
 Servo joint_1;
 Servo joint_2; 
 Servo joint_3; 
 Servo joint_4; 
 Servo joint_5; 
 
-
-// Slow movement
-// void reach_goal(Servo& motor, int goal){
-//   if(goal>=motor.read()){
-//     // goes from the start point degrees to the end point degrees
-//     for (int pos = motor.read(); pos <= goal; pos += 1) { 
-//       motor.write(pos);     
-//       delay(10);                       
-//     }
-//   } else{
-//     // goes from the end point degrees to the start point degrees
-//     for (int pos = motor.read(); pos >= goal; pos -= 1) { 
-//       motor.write(pos);     
-//       delay(10);                       
-//     }
-//   }
-// }
 
 void reach_goal(Servo motors[], int goals[], int delay_){
   int read_1 = motors[0].read();
@@ -97,7 +79,6 @@ void reach_goal(Servo motors[], int goals[], int delay_){
   }
 }
 
-// Split String
 std::vector<String> split_string(String data, char separator){
   std::vector<String> output;
   int startIndex = 0;
@@ -108,8 +89,11 @@ std::vector<String> split_string(String data, char separator){
     startIndex = endIndex + 1;
   }
   output.push_back(data.substring(startIndex));
-  delay(1000);
   return output;
+}
+
+int corrector(int x, float a, float b){
+  return int((x * a) + b);
 }
 
 void setup() {
@@ -134,35 +118,43 @@ void setup() {
   Serial.setTimeout(1);
   lcd.begin(16, 2);
 
-  delay(2000);  
+  delay(500); 
 }
 
 void loop() {
   if (Serial.available())
   {
     String data = Serial.readString();
-    std::vector<String> joint_commands = split_string(data, '-');
+    std::vector<String> joint_commands = split_string(data, ',');
     if(joint_commands.size() == 5){
       int goals[5] = {
-        joint_commands[0].toInt(), 
-        joint_commands[1].toInt(), 
-        joint_commands[2].toInt(), 
-        joint_commands[3].toInt(), 
-        joint_commands[4].toInt()
+        joint_commands[0].toInt() + 90,  // mapping -90 - 90 to 0 - 180
+        corrector(joint_commands[1].toInt(), 0.7222, -5.0) + 90, 
+        joint_commands[2].toInt() + 90,
+        joint_commands[3].toInt() + 90,
+        joint_commands[4].toInt() + 90
         };
       Servo motors[] = {joint_1, joint_2, joint_3, joint_4, joint_5};
 
       digitalWrite(LED_BUILTIN, HIGH);
       digitalWrite(2, HIGH);
-      reach_goal(motors, goals, 1);
+      reach_goal(motors, goals, 0);
       digitalWrite(2, LOW);
       digitalWrite(LED_BUILTIN, LOW);
 
+      String response = 
+          "F" +
+          joint_commands[0] + "," + 
+          joint_commands[1] + "," + 
+          joint_commands[2] + "," + 
+          joint_commands[3] + "," + 
+          joint_commands[4];
+
+      Serial.println(response);
+
+      lcd.clear();
       lcd.setCursor(0, 0);
-      for (int i = 0; i < 5; i++){
-        lcd.print(goals[i]);
-        lcd.print("-");
-      }
+      lcd.print(response);
     }
   }
 }
