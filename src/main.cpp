@@ -3,20 +3,22 @@
 #include <LiquidCrystal.h>
 #include <vector>
 
-#define JOINT_1_PIN 8
-#define JOINT_2_PIN 9
+#define JOINT_1_PIN 12
+#define JOINT_2_PIN 11
 #define JOINT_3_PIN 10
-#define JOINT_4_PIN 11
-#define JOINT_5_PIN 12
+#define JOINT_4_PIN 9
+#define JOINT_5_PIN 8
+#define GRIPPER_OPEN 7
+#define GRIPPER_CLOSE 6
 
 #define JOINT_1_START 90
 #define JOINT_2_START 90
-#define JOINT_3_START 90
-#define JOINT_4_START 90
+#define JOINT_3_START 0
+#define JOINT_4_START 175
 #define JOINT_5_START 90
 
-const int rs = 0, en = 1, d4 = 4, d5 = 5, d6 = 6, d7 = 7;
-LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
+// const int rs = 0, en = 1, d4 = 4, d5 = 5, d6 = 6, d7 = 7;
+// LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 
 Servo joint_1;
 Servo joint_2; 
@@ -105,18 +107,16 @@ void setup() {
   joint_5.attach(JOINT_5_PIN);
 
   digitalWrite(LED_BUILTIN, HIGH);
-  digitalWrite(2, HIGH);
   joint_1.write(JOINT_1_START);
   joint_2.write(JOINT_2_START);
   joint_3.write(JOINT_3_START);
   joint_4.write(JOINT_4_START);
   joint_5.write(JOINT_5_START);
-  digitalWrite(2, LOW);
   digitalWrite(LED_BUILTIN, LOW);
 
   Serial.begin(115200);
   Serial.setTimeout(1);
-  lcd.begin(16, 2);
+  // lcd.begin(16, 2);
 
   delay(500); 
 }
@@ -128,18 +128,16 @@ void loop() {
     std::vector<String> joint_commands = split_string(data, ',');
     if(joint_commands.size() == 5){
       int goals[5] = {
-        joint_commands[0].toInt() + 90,  // mapping -90 - 90 to 0 - 180
+        corrector(joint_commands[0].toInt(), 1.0, 0.0) + 90,  // mapping -90 - 90 to 0 - 180
         corrector(joint_commands[1].toInt(), 0.7222, -5.0) + 90, 
-        joint_commands[2].toInt() + 90,
-        joint_commands[3].toInt() + 90,
-        joint_commands[4].toInt() + 90
+        corrector(joint_commands[2].toInt(), -1.0, 0.0) + 90,
+        corrector(joint_commands[3].toInt(), 1.0, 0.0) + 90,
+        corrector(joint_commands[4].toInt(), 1.0, 0.0) + 90
         };
       Servo motors[] = {joint_1, joint_2, joint_3, joint_4, joint_5};
 
       digitalWrite(LED_BUILTIN, HIGH);
-      digitalWrite(2, HIGH);
       reach_goal(motors, goals, 0);
-      digitalWrite(2, LOW);
       digitalWrite(LED_BUILTIN, LOW);
 
       String response = 
@@ -152,9 +150,9 @@ void loop() {
 
       Serial.println(response);
 
-      lcd.clear();
-      lcd.setCursor(0, 0);
-      lcd.print(response);
+      // lcd.clear();
+      // lcd.setCursor(0, 0);
+      // lcd.print(response);
     }
   }
 }
