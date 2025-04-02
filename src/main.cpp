@@ -10,6 +10,7 @@
 #define JOINT_5_PIN 8
 #define GRIPPER_OPEN 7
 #define GRIPPER_CLOSE 6
+#define GRIPPER_LIMIT 5
 
 #define JOINT_1_START 90
 #define JOINT_2_START 90
@@ -26,6 +27,35 @@ Servo joint_3;
 Servo joint_4; 
 Servo joint_5; 
 
+int gripper_state = -1;
+
+void motors_init(){
+  joint_1.write(JOINT_1_START);
+  joint_2.write(JOINT_2_START);
+  joint_3.write(JOINT_3_START);
+  joint_4.write(JOINT_4_START);
+  joint_5.write(JOINT_5_START);
+}
+
+
+void gripper_init(){
+  digitalWrite(GRIPPER_OPEN, LOW); 
+  digitalWrite(GRIPPER_CLOSE, LOW);
+
+  while (digitalRead(GRIPPER_LIMIT) == LOW) {
+    digitalWrite(GRIPPER_OPEN, HIGH);
+    digitalWrite(GRIPPER_CLOSE, LOW);
+    digitalWrite(LED_BUILTIN, HIGH);
+    if (digitalRead(GRIPPER_LIMIT) == HIGH) {
+      break;
+    }
+    delay(1);
+  }
+  digitalWrite(GRIPPER_OPEN, LOW);
+  digitalWrite(GRIPPER_CLOSE, LOW);
+  digitalWrite(LED_BUILTIN, LOW);
+  gripper_state = 0;
+}
 
 void reach_goal(Servo motors[], int goals[], int delay_){
   int read_1 = motors[0].read();
@@ -99,25 +129,22 @@ int corrector(int x, float a, float b){
 }
 
 void setup() {
-  digitalWrite(2, LOW); 
+  pinMode(GRIPPER_LIMIT, INPUT);
+  pinMode(GRIPPER_OPEN, OUTPUT);
+  pinMode(GRIPPER_CLOSE, OUTPUT);
+
   joint_1.attach(JOINT_1_PIN);
   joint_2.attach(JOINT_2_PIN);
   joint_3.attach(JOINT_3_PIN);
   joint_4.attach(JOINT_4_PIN);
   joint_5.attach(JOINT_5_PIN);
 
-  digitalWrite(LED_BUILTIN, HIGH);
-  joint_1.write(JOINT_1_START);
-  joint_2.write(JOINT_2_START);
-  joint_3.write(JOINT_3_START);
-  joint_4.write(JOINT_4_START);
-  joint_5.write(JOINT_5_START);
-  digitalWrite(LED_BUILTIN, LOW);
-
+  delay(10); 
+  motors_init();
+  gripper_init();
   Serial.begin(115200);
   Serial.setTimeout(1);
   // lcd.begin(16, 2);
-
   delay(500); 
 }
 
